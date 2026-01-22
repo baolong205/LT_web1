@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách sinh viên</title>
+    <style>
+        table { border-collapse: collapse; width: 80%; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .btn-delete { color: red; text-decoration: none; font-weight: bold; }
+        .btn-edit { color: blue; text-decoration: none; font-weight: bold; margin-right: 15px; }
+        .btn-add { display: inline-block; margin-bottom: 15px; padding: 10px; background: blue; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<h2>DANH SÁCH SINH VIÊN</h2>
+
+<a th:href="@{/students/add}" class="btn-add">Thêm sinh viên mới</a>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Họ tên</th>
+        <th>Tuổi</th>
+        <th>Email</th>
+        <th>Thao tác</th> 
+    </tr>
+
+    <tr th:each="sv : ${students}">
+        <td th:text="${sv.id}"></td>
+        <td th:text="${sv.name}"></td>
+        <td th:text="${sv.age}"></td>
+        <td th:text="${sv.email}"></td>
+        <td>
+            <a th:href="@{/students/edit/{id}(id=${sv.id})}" class="btn-edit">Sửa</a>
+
+            <a th:href="@{/students/delete/{id}(id=${sv.id})}" 
+               class="btn-delete" 
+               onclick="return confirm('Bạn có chắc chắn muốn xóa sinh viên này không?')">
+               Xóa
+            </a>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
