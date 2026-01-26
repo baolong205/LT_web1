@@ -21,18 +21,18 @@ public class StudentController {
     public String listStudents(Model model) {
         List<Student> students = studentService.getAllStudents();
         model.addAttribute("students", students);
-        return "students"; 
+        return "students";
     }
 
     // 2. HIỂN THỊ FORM THÊM MỚI
     @GetMapping("/add")
     public String showAddForm(Model model) {
         model.addAttribute("student", new Student());
-        return "redirect:/students";
-        
+        return "addStudent";
+
     }
 
-    // 3. XỬ LÝ LƯU (Dùng chung cho cả Thêm và Cập nhật)
+    // 3. XỬ LÝ LƯU (Dùng chung cho cả Thêm và Cập nhật
     @PostMapping("/save")
     public String saveStudent(@ModelAttribute Student student) {
         // JpaRepository tự hiểu: Nếu ID mới -> Insert, nếu ID đã có -> Update
@@ -45,7 +45,7 @@ public class StudentController {
     public String showEditForm(@PathVariable int id, Model model) {
         Student student = studentService.getStudentById(id)
                 .orElseThrow(() -> new IllegalArgumentException("ID không hợp lệ: " + id));
-        
+
         model.addAttribute("student", student);
         return "addStudent"; // Dùng chung giao diện với trang thêm
     }
@@ -55,5 +55,14 @@ public class StudentController {
     public String deleteStudent(@PathVariable int id) {
         studentService.deleteStudent(id);
         return "redirect:/students";
+    }
+
+    // 6. TÌM KIẾM: Tìm kiếm sinh viên theo tên
+    @GetMapping("/search")
+    public String searchStudents(@RequestParam("keyword") String keyword, Model model) {
+        List<Student> results = studentService.searchStudents(keyword);
+        model.addAttribute("students", results);
+        model.addAttribute("keyword", keyword); // Để hiển thị lại từ khóa trên ô nhập
+        return "students";
     }
 }

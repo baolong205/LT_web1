@@ -24,7 +24,8 @@ public class StudentService {
     }
 
     // 3. Lưu hoặc Cập nhật sinh viên
-    // JpaRepository tự hiểu: nếu đối tượng có ID đã tồn tại sẽ là Update, nếu ID mới sẽ là Insert
+    // JpaRepository tự hiểu: nếu đối tượng có ID đã tồn tại sẽ là Update, nếu ID
+    // mới sẽ là Insert
     public Student saveStudent(Student student) {
         return repository.save(student);
     }
@@ -33,4 +34,8 @@ public class StudentService {
     public void deleteStudent(int id) {
         repository.deleteById(id);
     }
+    // 5. Tìm kiếm sinh viên theo tên (chứa từ khóa, không phân biệt hoa thường)
+    public List<Student> searchStudents(String name) {
+       return repository.findByNameContainingIgnoreCase(name);
+}
 }
