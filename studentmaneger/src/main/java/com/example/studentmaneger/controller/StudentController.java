@@ -64,11 +64,20 @@ public class StudentController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Yêu cầu 3: Tìm kiếm sinh viên theo tên (keyword)
+    // Yêu cầu 3:
     @GetMapping("/api/students/search")
     @ResponseBody
     public List<Student> searchApi(@RequestParam("keyword") String keyword) {
-        return studentService.searchStudents(keyword);
+        // 1. Kiểm tra nếu keyword là số thì tìm theo ID
+        try {
+            int id = Integer.parseInt(keyword);
+            return studentService.getStudentById(id)
+                    .map(List::of) // Nếu thấy ID, trả về danh sách 1 người
+                    .orElse(List.of()); // Không thấy thì trả về danh sách rỗng
+        } catch (NumberFormatException e) {
+            // 2. Nếu không phải là số (nhập chữ), tìm kiếm theo tên như cũ
+            return studentService.searchStudents(keyword);
+        }
     }
 
     // Yêu cầu 1: Thêm sinh viên mới
