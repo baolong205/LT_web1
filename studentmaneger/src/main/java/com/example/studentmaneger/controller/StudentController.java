@@ -3,12 +3,16 @@ package com.example.studentmaneger.controller;
 import com.example.studentmaneger.entity.Student;
 import com.example.studentmaneger.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controller xử lý giao diện người dùng (Thymeleaf)
+ */
 @Controller
 @RequestMapping("/students")
 public class StudentController {
@@ -16,53 +20,63 @@ public class StudentController {
     @Autowired
     private StudentService studentService;
 
-    // 1. ĐỌC: Hiển thị danh sách sinh viên
+    // 1. Trang danh sách sinh viên
     @GetMapping
     public String listStudents(Model model) {
-        List<Student> students = studentService.getAllStudents();
-        model.addAttribute("students", students);
-        return "students";
+        model.addAttribute("students", studentService.getAllStudents());
+        return "students"; 
     }
 
-    // 2. HIỂN THỊ FORM THÊM MỚI
+    // 2. Trang thêm/sửa (Giao diện)
     @GetMapping("/add")
     public String showAddForm(Model model) {
         model.addAttribute("student", new Student());
-        return "addStudent";
-
+        return "addStudent"; 
     }
 
-    // 3. XỬ LÝ LƯU (Dùng chung cho cả Thêm và Cập nhật
-    @PostMapping("/save")
-    public String saveStudent(@ModelAttribute Student student) {
-        // JpaRepository tự hiểu: Nếu ID mới -> Insert, nếu ID đã có -> Update
-        studentService.saveStudent(student);
-        return "redirect:/students";
-    }
-
-    // 4. HIỂN THỊ FORM CẬP NHẬT (Lấy dữ liệu cũ đổ vào Form)
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable int id, Model model) {
         Student student = studentService.getStudentById(id)
                 .orElseThrow(() -> new IllegalArgumentException("ID không hợp lệ: " + id));
-
         model.addAttribute("student", student);
-        return "addStudent"; // Dùng chung giao diện với trang thêm
+        return "addStudent"; 
+    }
+}
+
+/**
+ * PHẦN SỬA ĐỔI: API Controller xử lý dữ liệu JSON (Fetch API)
+ * Đường dẫn gốc: http://localhost:8080/api/students
+ */
+@RestController
+@RequestMapping("/api/students")
+@CrossOrigin("*") // Cho phép gọi từ trình duyệt mà không bị lỗi CORS
+class StudentRestController {
+
+    @Autowired
+    private StudentService studentService;
+
+    // Lấy toàn bộ JSON: GET /api/students
+    @GetMapping
+    public List<Student> getAllApi() {
+        return studentService.getAllStudents();
     }
 
-    // 5. XÓA: Xử lý xóa theo ID
-    @GetMapping("/delete/{id}")
-    public String deleteStudent(@PathVariable int id) {
-        studentService.deleteStudent(id);
-        return "redirect:/students";
-    }
-
-    // 6. TÌM KIẾM: Tìm kiếm sinh viên theo tên
+    // Tìm kiếm JSON: GET /api/students/search?keyword=...
     @GetMapping("/search")
-    public String searchStudents(@RequestParam("keyword") String keyword, Model model) {
-        List<Student> results = studentService.searchStudents(keyword);
-        model.addAttribute("students", results);
-        model.addAttribute("keyword", keyword); // Để hiển thị lại từ khóa trên ô nhập
-        return "students";
+    public List<Student> searchApi(@RequestParam("keyword") String keyword) {
+        return studentService.searchStudents(keyword);
+    }
+
+    // Lưu/Cập nhật JSON: POST /api/students/save
+    @PostMapping("/save")
+    public Student saveApi(@RequestBody Student student) {
+        return studentService.saveStudent(student);
+    }
+
+    // Xóa JSON: DELETE /api/students/delete/{id}
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteApi(@PathVariable int id) {
+        studentService.deleteStudent(id);
+        return ResponseEntity.ok("Đã xóa sinh viên ID: " + id);
     }
 }
