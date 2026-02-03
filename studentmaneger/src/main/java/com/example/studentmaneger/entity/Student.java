@@ -1,6 +1,8 @@
 package com.example.studentmaneger.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -9,40 +11,40 @@ import jakarta.persistence.Table;
 public class Student {
 
     @Id
-    private int id;
+    // THÊM DÒNG NÀY: Để SQL Server tự động sinh ID (1, 2, 3...)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id; // Chuyển từ int sang Integer để hỗ trợ giá trị null khi thêm mới
+    
     private String name;
     private int age;
     private String email;
 
-    public int getId() {
+    // Getter và Setter cho ID dùng Integer
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    // ... Các Getter và Setter khác giữ nguyên ...
+    public String getName() { 
+        return name; 
     }
-
-    public void setName(String name) {
-        this.name = name;
+    public void setName(String name) { 
+        this.name = name; 
     }
-
     public int getAge() {
-        return age;
+        return age; 
     }
-
     public void setAge(int age) {
-        this.age = age;
+        this.age = age; 
     }
-
     public String getEmail() {
-        return email;
+        return email; 
     }
-
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email; 
     }
 }

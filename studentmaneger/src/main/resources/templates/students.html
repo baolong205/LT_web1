@@ -11,7 +11,7 @@
         .container { margin-top: 50px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         h2 { font-weight: 600; color: #2c3e50; margin-bottom: 25px; border-left: 5px solid #0d6efd; padding-left: 15px; }
         .table { vertical-align: middle; }
-        .btn-action { padding: 5px 12px; font-size: 0.9rem; border-radius: 6px; transition: all 0.2s; text-decoration: none; }
+        .btn-action { padding: 5px 12px; font-size: 0.9rem; border-radius: 6px; transition: all 0.2s; text-decoration: none; display: inline-block; }
         .btn-edit { background-color: #e7f1ff; color: #0d6efd; border: 1px solid #0d6efd; }
         .btn-edit:hover { background-color: #0d6efd; color: white; }
         .btn-delete { background-color: #fff5f5; color: #dc3545; border: 1px solid #dc3545; cursor: pointer; }
@@ -29,9 +29,8 @@
         
         <div class="d-flex search-box">
             <div class="input-group">
-                <input type="text" id="keyword" class="form-control" placeholder="Tìm theo tên sinh viên...">
-                <button class="btn btn-success" onclick="searchStudents()">Tìm</button>
-                <button class="btn btn-outline-secondary" onclick="resetSearch()">Xóa</button>
+                <input type="text" id="keyword" class="form-control" placeholder="Tìm theo tên sinh viên..." oninput="searchStudents()">
+                <button class="btn btn-outline-secondary" onclick="resetSearch()">Xóa lọc</button>
             </div>
         </div>
     </div>
@@ -53,11 +52,12 @@
     </div>
     
     <div class="mt-3 text-end text-muted">
-        <small>Tổng cộng: <span id="totalCount">0</span> sinh viên</small>
+        <small>Tổng cộng: <span id="totalCount" class="fw-bold">0</span> sinh viên</small>
     </div>
 </div>
 
 <script>
+    // URL này trỏ đến API (Phần trả về JSON)
     const API_URL = "http://localhost:8080/api/students";
 
     // 1. Hàm tải danh sách sinh viên
@@ -80,7 +80,7 @@
                         <tr>
                             <td class="fw-bold text-secondary">${sv.id}</td>
                             <td class="fw-semibold">${sv.name}</td>
-                            <td class="text-center">${sv.age}</td>
+                            <td class="text-center">${sv.age || 'N/A'}</td>
                             <td><a href="mailto:${sv.email}" class="text-decoration-none text-muted">${sv.email}</a></td>
                             <td class="text-center">
                                 <div class="btn-group">
@@ -93,28 +93,34 @@
                 });
                 totalCount.innerText = data.length;
             })
-            .catch(error => console.error('Lỗi khi tải dữ liệu:', error));
+            .catch(error => {
+                console.error('Lỗi khi tải dữ liệu:', error);
+                document.getElementById("studentTableBody").innerHTML = `<tr><td colspan="5" class="text-center text-danger">⚠️ Lỗi kết nối đến Server API</td></tr>`;
+            });
     }
 
-    // 2. Hàm tìm kiếm
+    // 2. Hàm tìm kiếm (Sử dụng API search)
     function searchStudents() {
         const keyword = document.getElementById("keyword").value;
-        loadStudents(`${API_URL}/search?keyword=${keyword}`);
+        loadStudents(`${API_URL}/search?keyword=${encodeURIComponent(keyword)}`);
     }
 
-    // 3. Hàm xóa sinh viên
+    // 3. Hàm xóa sinh viên (Sửa lại dùng POST theo Yêu cầu 2 của bài thi)
     function deleteStudent(id) {
         if (confirm("Bạn có chắc chắn muốn xóa sinh viên này không?")) {
-            fetch(`${API_URL}/delete/${id}`, { method: 'DELETE' })
-                .then(response => {
-                    if (response.ok) {
-                        alert("Xóa thành công!");
-                        loadStudents(); // Tải lại danh sách
-                    } else {
-                        alert("Xóa thất bại!");
-                    }
-                })
-                .catch(error => console.error('Lỗi khi xóa:', error));
+            // Theo yêu cầu thi của bạn: @PostMapping("/api/students/delete/{id}")
+            fetch(`${API_URL}/delete/${id}`, { 
+                method: 'POST' 
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Xóa thành công!");
+                    loadStudents(); // Tải lại bảng sau khi xóa
+                } else {
+                    alert("Lỗi: Không thể xóa sinh viên này.");
+                }
+            })
+            .catch(error => console.error('Lỗi khi xóa:', error));
         }
     }
 
@@ -124,7 +130,7 @@
         loadStudents();
     }
 
-    // Tự động load dữ liệu khi mở trang
+    // Tự động load dữ liệu khi vừa mở trang
     document.addEventListener("DOMContentLoaded", () => loadStudents());
 </script>
 

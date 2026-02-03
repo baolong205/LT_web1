@@ -4,6 +4,7 @@ import com.example.studentmaneger.entity.Student;
 import com.example.studentmaneger.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // Thêm cái này
 import java.util.List;
 import java.util.Optional;
 
@@ -13,29 +14,31 @@ public class StudentService {
     @Autowired
     private StudentRepository repository;
 
-    // 1. Lấy tất cả sinh viên từ SQL Server
     public List<Student> getAllStudents() {
         return repository.findAll();
     }
 
-    // 2. Lấy sinh viên theo ID (Dùng cho chức năng Sửa/Xem chi tiết)
     public Optional<Student> getStudentById(int id) {
         return repository.findById(id);
     }
 
-    // 3. Lưu hoặc Cập nhật sinh viên
-    // JpaRepository tự hiểu: nếu đối tượng có ID đã tồn tại sẽ là Update, nếu ID
-    // mới sẽ là Insert
+    @Transactional // Đảm bảo dữ liệu được ghi xuống DB ngay lập tức
     public Student saveStudent(Student student) {
         return repository.save(student);
     }
 
-    // 4. Xóa sinh viên theo ID
+    // SỬA LẠI HÀM XÓA:
+    @Transactional
     public void deleteStudent(int id) {
-        repository.deleteById(id);
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            repository.flush(); // Ép buộc SQL Server thực hiện lệnh xóa ngay bây giờ
+        } else {
+            throw new RuntimeException("Không tìm thấy sinh viên ID: " + id);
+        }
     }
-    // 5. Tìm kiếm sinh viên theo tên (chứa từ khóa, không phân biệt hoa thường)
+
     public List<Student> searchStudents(String name) {
-       return repository.findByNameContainingIgnoreCase(name);
-}
+        return repository.findByNameContainingIgnoreCase(name);
+    }
 }

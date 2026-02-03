@@ -10,73 +10,91 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Controller xử lý giao diện người dùng (Thymeleaf)
- */
 @Controller
-@RequestMapping("/students")
+@CrossOrigin("*")
 public class StudentController {
 
     @Autowired
     private StudentService studentService;
 
-    // 1. Trang danh sách sinh viên
-    @GetMapping
-    public String listStudents(Model model) {
+    // ======================================================
+    // PHẦN 1: CÁC ĐƯỜNG DẪN GIAO DIỆN (VIEW)
+    // ======================================================
+
+    // 1. Trang danh sách sinh viên: http://localhost:8080/students
+    @GetMapping("/students")
+    public String listView(Model model) {
         model.addAttribute("students", studentService.getAllStudents());
-        return "students"; 
+        return "students";
     }
 
-    // 2. Trang thêm/sửa (Giao diện)
-    @GetMapping("/add")
-    public String showAddForm(Model model) {
+    // 2. Trang thêm sinh viên: http://localhost:8080/students/add
+    @GetMapping("/students/add")
+    public String addView(Model model) {
         model.addAttribute("student", new Student());
-        return "addStudent"; 
+        return "addStudent";
     }
 
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable int id, Model model) {
+    // 3. Trang sửa sinh viên: http://localhost:8080/students/edit/{id}
+    @GetMapping("/students/edit/{id}")
+    public String editView(@PathVariable int id, Model model) {
         Student student = studentService.getStudentById(id)
                 .orElseThrow(() -> new IllegalArgumentException("ID không hợp lệ: " + id));
         model.addAttribute("student", student);
-        return "addStudent"; 
+        return "addStudent";
     }
-}
 
-/**
- * PHẦN SỬA ĐỔI: API Controller xử lý dữ liệu JSON (Fetch API)
- * Đường dẫn gốc: http://localhost:8080/api/students
- */
-@RestController
-@RequestMapping("/api/students")
-@CrossOrigin("*") // Cho phép gọi từ trình duyệt mà không bị lỗi CORS
-class StudentRestController {
+    // ======================================================
+    // PHẦN 2: 6 YÊU CẦU API (NỘP BÀI) - GỐC /api/students
+    // ======================================================
 
-    @Autowired
-    private StudentService studentService;
-
-    // Lấy toàn bộ JSON: GET /api/students
-    @GetMapping
+    // Yêu cầu 5: Lấy danh sách toàn bộ sinh viên (Get All)
+    @GetMapping("/api/students")
+    @ResponseBody
     public List<Student> getAllApi() {
         return studentService.getAllStudents();
     }
 
-    // Tìm kiếm JSON: GET /api/students/search?keyword=...
-    @GetMapping("/search")
+    // Yêu cầu 4: Lấy sinh viên theo ID
+    @GetMapping("/api/students/{id}")
+    @ResponseBody
+    public ResponseEntity<Student> getByIdApi(@PathVariable int id) {
+        return studentService.getStudentById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // Yêu cầu 3: Tìm kiếm sinh viên theo tên (keyword)
+    @GetMapping("/api/students/search")
+    @ResponseBody
     public List<Student> searchApi(@RequestParam("keyword") String keyword) {
         return studentService.searchStudents(keyword);
     }
 
-    // Lưu/Cập nhật JSON: POST /api/students/save
-    @PostMapping("/save")
-    public Student saveApi(@RequestBody Student student) {
+    // Yêu cầu 1: Thêm sinh viên mới
+    @PostMapping("/api/students")
+    @ResponseBody
+    public Student addApi(@RequestBody Student student) {
+        // Ép về null để Hibernate hiểu đây là thêm mới hoàn toàn
+        student.setId(null);
         return studentService.saveStudent(student);
     }
 
-    // Xóa JSON: DELETE /api/students/delete/{id}
-    @DeleteMapping("/delete/{id}")
+    // Yêu cầu 6: Cập nhật thông tin sinh viên
+    @PostMapping("/api/students/update/{id}")
+    @ResponseBody
+    public ResponseEntity<Student> updateApi(@PathVariable int id, @RequestBody Student student) {
+        return studentService.getStudentById(id).map(existing -> {
+            student.setId(id);
+            return ResponseEntity.ok(studentService.saveStudent(student));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // Yêu cầu 2: Xóa sinh viên
+    @PostMapping("/api/students/delete/{id}")
+    @ResponseBody
     public ResponseEntity<String> deleteApi(@PathVariable int id) {
         studentService.deleteStudent(id);
-        return ResponseEntity.ok("Đã xóa sinh viên ID: " + id);
+        return ResponseEntity.ok("Xóa thành công sinh viên ID: " + id);
     }
 }
